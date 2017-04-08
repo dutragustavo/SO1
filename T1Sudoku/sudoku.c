@@ -1,0 +1,92 @@
+#include <stdio.h>
+
+/* grid size = 9x9 */
+#define SIZE 9
+
+int grid[SIZE][SIZE];
+
+/* Funcao que le um grid do arquivo "filename" e o armazena em uma matriz */
+int load_grid(char *filename) {
+	FILE *input_file = fopen(filename, "r");
+
+	if (input_file != NULL) {
+		for(int i = 0; i < SIZE; i++)
+			for(int j = 0; j < SIZE; j++)
+				fscanf(input_file, "%d", &grid[i][j]);
+		fclose(input_file);
+		return 1;
+	}
+
+	return 0;
+}
+
+int check_row(int row_id){
+	for (int i = 0; i < SIZE; ++i)
+	{
+		for (int j = i + 1; j < SIZE; ++j)
+		{
+			if(grid[row_id][i] == grid[row_id][j])
+				return i;
+		}
+	}
+	return -1;
+}
+
+void check_all_rows(){
+	int ret;
+	for(int row_id = 0; row_id < SIZE; ++row_id){
+		ret = check_row(row_id);
+		if(ret >= 0)
+			printf("Erro na linha %d coluna %d", row_id, ret);
+	}
+}
+
+int check_column(int column_id){
+	for (int i = 0; i < SIZE; ++i)
+	{
+		for (int j = i + 1; j < SIZE; ++j)
+		{
+			if(grid[j][column_id] == grid[i][column_id])
+				return i;
+		}
+	}
+	return -1;
+}
+
+void check_all_columns(){
+	int ret;
+	for(int column_id = 0; column_id < SIZE; ++column_id){
+		ret = check_column(column_id);
+		if(ret >= 0)
+			printf("Erro na linha %d coluna %d\n", ret, column_id);
+	}
+}
+
+int check_quarter()
+{
+	for (int i = 0; i < 3; ++i)
+	{
+		for (int j = 0; j < 3; ++i)
+		{
+			int value = grid[i][j]; 
+		}
+	}
+}
+
+int main(int argc, char *argv[]) {
+
+	if(argc != 2) {
+		printf("Erro: informe o arquivo de entrada!\nUso: %s <arquivo de entrada>\n\n", argv[0]);
+		return 1;
+	}
+
+	/* Le o grid do arquivo, armazena na matriz grid e imprime */
+	if(!load_grid(argv[1])){
+		printf("Erro no carregamento do quebra-cabeça\n");
+		return 1;
+	}
+
+	check_all_columns();
+	check_all_rows();
+	return 0;
+}
