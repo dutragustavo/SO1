@@ -33,7 +33,7 @@ int check_row(int row_id){
 	return -1;
 }
 
-void check_all_rows(){
+void validate_rows(){
 	int ret;
 	for(int row_id = 0; row_id < SIZE; ++row_id){
 		ret = check_row(row_id);
@@ -56,7 +56,7 @@ int check_column(int column_id){
 	return -1;
 }
 
-void check_all_columns(){
+void validate_columns(){
 	int ret;
 	for(int column_id = 0; column_id < SIZE; ++column_id){
 		ret = check_column(column_id);
@@ -66,6 +66,8 @@ void check_all_columns(){
 		}
 	}
 }
+
+
 
 int main(int argc, char *argv[]) {
 
@@ -82,8 +84,9 @@ int main(int argc, char *argv[]) {
 
 	err_counter = 0;
 
-	check_all_columns();
-	check_all_rows();
+	validate_columns();
+	validate_rows();
+	check_grid();
 	printf("Erros encontrados: %d\n", err_counter);
 	return 0;
 }
