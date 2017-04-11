@@ -4,6 +4,7 @@
 #define SIZE 9
 
 int grid[SIZE][SIZE];
+int err_counter;
 
 /* Funcao que le um grid do arquivo "filename" e o armazena em uma matriz */
 int load_grid(char *filename) {
@@ -36,8 +37,10 @@ void check_all_rows(){
 	int ret;
 	for(int row_id = 0; row_id < SIZE; ++row_id){
 		ret = check_row(row_id);
-		if(ret >= 0)
+		if(ret >= 0){
+			err_counter++;
 			printf("Erro na linha %d coluna %d", row_id, ret);
+		}
 	}
 }
 
@@ -57,18 +60,9 @@ void check_all_columns(){
 	int ret;
 	for(int column_id = 0; column_id < SIZE; ++column_id){
 		ret = check_column(column_id);
-		if(ret >= 0)
+		if(ret >= 0){
+			err_counter++;
 			printf("Erro na linha %d coluna %d\n", ret, column_id);
-	}
-}
-
-int check_quarter()
-{
-	for (int i = 0; i < 3; ++i)
-	{
-		for (int j = 0; j < 3; ++i)
-		{
-			int value = grid[i][j]; 
 		}
 	}
 }
@@ -86,7 +80,10 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	err_counter = 0;
+
 	check_all_columns();
 	check_all_rows();
+	printf("Erros encontrados: %d\n", err_counter);
 	return 0;
 }
