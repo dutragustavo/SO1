@@ -1,10 +1,15 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <string.h>
 
 /* grid size = 9x9 */
 #define SIZE 9
 
+
 int grid[SIZE][SIZE];
 int err_counter;
+pthread_mutex_t counter_mutex;
 
 /* Funcao que le um grid do arquivo "filename" e o armazena em uma matriz */
 int load_grid(char *filename) {
@@ -21,57 +26,111 @@ int load_grid(char *filename) {
 	return 0;
 }
 
-int check_row(int row_id){
-	for (int i = 0; i < SIZE; ++i)
-	{
-		for (int j = i + 1; j < SIZE; ++j)
-		{
-			if(grid[row_id][i] == grid[row_id][j])
-				return i;
-		}
-	}
-	return -1;
-}
 
-void validate_all_rows(){
-	int ret;
-	for(int row_id = 0; row_id < SIZE; ++row_id){
-		ret = check_row(row_id);
-		if(ret >= 0){
-			err_counter++;
-			printf("Erro na linha %d coluna %d\n", row_id, ret);
-		}
+//soma dos elementos de 1 a 9 == 45 
+int check_row(int row_id){
+	int sum = 0;
+	for (int i = 0; i < SIZE; i++)
+	{
+		sum += grid[row_id][i];
 	}
+	return (sum == 45);
 }
 
 int check_column(int column_id){
-	for (int i = 0; i < SIZE; ++i)
+	int sum = 0;
+	for (int i = 0; i < SIZE; i++)
 	{
-		for (int j = i + 1; j < SIZE; ++j)
-		{
-			if(grid[j][column_id] == grid[i][column_id])
-				return i;
-		}
+		sum += grid[i][column_id];
 	}
-	return -1;
+	return (sum == 45);
 }
 
-void validate_all_columns(){
-	int ret;
-	for(int column_id = 0; column_id < SIZE; ++column_id){
-		ret = check_column(column_id);
-		if(ret >= 0){
-			err_counter++;
-			printf("Erro na linha %d coluna %d\n", ret, column_id);
+int check_region(int region_index){
+	int row_index = (region_index / 3) * 3;
+	int column_index = (region_index % 3) * 3;
+
+	int sum = 0;
+	for (int i = row_index; i < row_index + 3; i++)
+	{
+		for (int j = column_index; j < column_index + 3; j++)
+		{
+			sum += grid[i][j];
+		}
+	}
+
+	return (sum == 45);
+}
+
+void increment_counter(){
+	pthread_mutex_lock(&counter_mutex);
+	err_counter++;
+	pthread_mutex_unlock(&counter_mutex);	
+}
+
+pthread_mutex_t work_mutex;
+//1 - nenhuma thread fez a verificação do elemento desse indice
+//0 - esse indice ja foi verificado
+int work_map[3][9];
+
+void* do_work(void* _index){
+	int index = (int)_index;
+	int valid = 1;
+	for(int i = 0; i < 3; i++)
+	{
+		for(int j = 0; j < 9; j++)
+		{
+			pthread_mutex_lock(&work_mutex);
+			if(work_map[i][j] == 0){
+				pthread_mutex_unlock(&work_mutex);
+				continue;
+			}
+
+			work_map[i][j] = 0;
+			pthread_mutex_unlock(&work_mutex);
+			switch(i){
+				case 0: 
+						valid = check_row(j); 
+						if(!valid){
+							increment_counter();
+							printf("Thread %d: erro na linha %d\n", index, j);
+						}
+						break;
+				
+				case 1: 
+						valid = check_column(j); 
+						if(!valid){
+							increment_counter();
+							printf("Thread %d: erro na coluna %d\n", index, j);
+						}
+						break;
+				
+				case 2: 
+						valid = check_region(j); 
+						if(!valid){
+							increment_counter();
+							printf("Thread %d: erro na região %d\n", index, j);
+						}
+						break;
+			}		
 		}
 	}
 }
 
 int main(int argc, char *argv[]) {
 
-	if(argc != 2) {
+	if(argc < 2) {
 		printf("Erro: informe o arquivo de entrada!\nUso: %s <arquivo de entrada>\n\n", argv[0]);
 		return 1;
+	}
+
+	int num_threads = 1;
+	if(argv[2]){
+		num_threads = atoi(argv[2]);
+	}
+
+	if(num_threads < 1){ //atoi pode falhar
+		num_threads = 1;
 	}
 
 	/* Le o grid do arquivo, armazena na matriz grid e imprime */
@@ -80,10 +139,23 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	pthread_mutex_init(&counter_mutex, NULL);
 	err_counter = 0;
 
-	validate_all_columns();
-	validate_all_rows();
+	pthread_mutex_init(&work_mutex, NULL);
+	memset(work_map, 1, sizeof(work_map[0][0]) * 3 * 9);
+
+	pthread_t threads[num_threads];
+	for (int i = 0; i < num_threads; i++)
+	{
+		pthread_create(&threads[i], NULL, do_work, (void*)i);
+	}
+
+	for (int i = 0; i < num_threads; i++)
+	{
+		pthread_join(threads[i], NULL);
+	}
+
 	printf("Erros encontrados: %d\n", err_counter);
 	return 0;
 }
