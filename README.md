@@ -7,6 +7,9 @@ Os trabalhos 2, 3 e 4 foram trabalhos de implementação feitos em cima do siste
 O código está no meu fork do Nanvix: https://github.com/dutragustavo/nanvix 
 
 branches:
+
 T2 - lottery-sched: https://github.com/dutragustavo/nanvix/tree/lottery-sched
+
 T3 - memory_aging: https://github.com/dutragustavo/nanvix/tree/memory_aging
+
 T4 - prefetching: https://github.com/dutragustavo/nanvix/tree/prefetching
